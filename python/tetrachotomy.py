@@ -57,7 +57,7 @@ def get_integrands(a, b, A, B, x, func):
 
 def cut_in_four(z0, z1, ratio_re = 0.5, ratio_im = 0.5):
     x0, x1, y0, y1 = z0.real, z1.real, z0.imag, z1.imag
-    xm, ym = ratio_re*(x0 + x1), ratio_im*(y0 + y1)
+    xm, ym = x0 + ratio_re*(x1 - x0), y0 + ratio_im*(y1- y0)
     zm = xm +1j*ym
     zb = xm +1j*y0
     zt = xm +1j*y1
@@ -96,17 +96,21 @@ def ispole(func, z0, z1, tols = tols, par_integ = par_integ):
         r2 = True
     return pole, residue, r0, r1, r2, message
 
-def pole_hunt(func, z0, z1, tols = tols, par_integ = par_integ, poles = [], residues = []):
+
+def pole_hunt(func, z0, z1, tols = tols, par_integ = par_integ, poles = [], residues = [], nb_cuts = 0):
+    print('nb_cuts = ', nb_cuts)
     trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#ff884d")
     pole, residue, r0, r1, r2, message = ispole(func, z0, z1, tols = tols,  par_integ = par_integ)
     print(message)
     trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
     if r2:
         print('Cutting in four')
-        inv_golden_number =  1/3#1/(0.5*(1+np.sqrt(5)))
+        nb_cuts += 1
+        inv_golden_number =  1/(0.5*(1+np.sqrt(5)))
         Z = cut_in_four(z0, z1, ratio_re =inv_golden_number , ratio_im =inv_golden_number)
         for z in Z:
-            pole_hunt(func, z[0], z[1], tols = tols,  par_integ = par_integ, poles = poles, residues= residues)
+            _ , _, nb_cuts = pole_hunt(func, z[0], z[1], tols = tols,
+             par_integ = par_integ, poles = poles, residues= residues, nb_cuts = nb_cuts)
     else:
         if r1:
             print('Found a new pole {}, with residue {}'.format(pole, residue))
@@ -116,7 +120,7 @@ def pole_hunt(func, z0, z1, tols = tols, par_integ = par_integ, poles = [], resi
     # trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
     poles, residues = np.array(poles), np.array(residues)
     isort = poles.argsort()
-    return poles[isort], residues[isort]
+    return poles[isort], residues[isort], nb_cuts
 
 if __name__ == '__main__':
     print("This is the tetrachotomy module")

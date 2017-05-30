@@ -41,8 +41,8 @@ z0 = 0
 z1 = 1 + 1*1j
 
 
-np.random.seed(1)
-N = 12
+np.random.seed(5)
+N = 15
 x,y = np.random.rand(N), np.random.rand(N)
 zpole = x+1j*y
 xr,yr = np.random.rand(N), np.random.rand(N)
@@ -64,8 +64,10 @@ def func(z):
 x0, x1, y0, y1 = z0.real, z1.real, z0.imag, z1.imag
 xp = np.linspace(x0, x1, 101)
 
-plt.close('all')
-fig =plt.figure()
+# plt.close('all')
+# fig = plt.figure()
+plt.clf()
+fig = plt.gcf()
 ax = fig.add_subplot(111)#, aspect='equal')
 ax.set_xlim((x0,x1))
 ax.set_ylim((y0,y1))
@@ -93,9 +95,11 @@ plt.gca().plot(np.real(zpole), np.imag(zpole), 's', color = "b")
 
 # tc.compute_integral(func, z0,z1,0, par_integ = par_integ)
 
-poles, residues  = tc.pole_hunt(func, z0, z1, tols = tols, par_integ= par_integ)
+poles, residues, nb_cuts  = tc.pole_hunt(func, z0, z1, tols = tols, par_integ= par_integ)
 print('poles = ', poles)
 print('residues = ', residues)
+
+print('nb_cuts = ', nb_cuts)
 #
 # plt.clf()
 # plt.plot(np.real(poles), np.imag(poles), 'oy')
