@@ -4,7 +4,7 @@ npole=0 ;
 q=ispole(rect0,f,tolre0,tolim0,tolre1,tolim1,tolreR,tolimR,tol_conv);
 n=n+1
 if trace
-    trace_rect(rect0,'none'); 
+    trace_rect(rect0,'none');
     hold on;
 end
 npole=q.r2;
