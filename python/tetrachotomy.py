@@ -5,12 +5,41 @@ plt.ion()
 import seaborn as sns
 sns.set_context("poster", font_scale = 1.)
 sns.set_style("white")
-from scipy.integrate import romberg
 pi = np.pi
 import matplotlib.patches as patches
 
 tols = (1e-6 *(1 + 1j), 1e-6 *(1 + 1j), 1e-4 *(1 + 1j))
 par_integ = (1e-8, 1e-8, 15)
+
+
+def romberg( f, a, b, divmax = 10, tol = 1e-6, rtol = 1e-6, size = 1):
+    r = np.zeros( (divmax+2, divmax+2, size), dtype =  complex )
+    h = b - a
+    r[0,0,:] = 0.5 * h * ( f( a ) + f( b ) )
+
+    powerOf2 = 1
+    for i in range( 1, divmax + 2 ):
+        h = 0.5 * h
+
+        sum = 0.0
+        powerOf2 = 2 * powerOf2
+        for k in range( 1, powerOf2, 2 ):
+            sum = sum + f( a + k * h )
+        r[i,0,:] = 0.5 * r[i-1,0,:] + sum * h
+
+        powerOf4 = 1
+        for j in range( 1, i + 1 ):
+            powerOf4 = 4 * powerOf4
+            r[i,j,:] = r[i,j-1,:] + ( r[i,j-1,:] - r[i-1,j-1,:] ) / ( powerOf4 - 1 )
+
+        current_tol = np.abs(r[i, j,:] - r[i-1, j-1,:])
+        current_rtol = np.abs( 1 - r[i-1, j-1,:]/r[i, j,:])
+        # print('current_tol = ', current_tol)
+        # print('current_rtol = ', current_rtol)
+        if i>0 and  (np.all(current_tol< tol) or np.all(current_tol< rtol)):
+            return r[i,i,:]
+    return  r[i,i,:]
+
 
 def trace_rect(ax, z0, z1, **kwargs):
     ax.add_patch(
@@ -21,7 +50,7 @@ def trace_rect(ax, z0, z1, **kwargs):
         **kwargs
         ),
     )
-    plt.pause(0.01)
+    plt.pause(0.0001)
 
 
 def parametrization_line(z0, z1, loc):
@@ -53,7 +82,7 @@ def get_integrands(a, b, A, B, x, func):
     Pt, dPt = (b - a)*P + a, (b - a)*dP
     PT = A*Pt + B
     fper = A*func(PT)*dPt
-    return fper, PT*fper, PT**2*fper
+    return np.array([fper, PT*fper, PT**2*fper])
 
 def cut_in_four(z0, z1, ratio_re = 0.5, ratio_im = 0.5):
     x0, x1, y0, y1 = z0.real, z1.real, z0.imag, z1.imag
@@ -68,13 +97,10 @@ def cut_in_four(z0, z1, ratio_re = 0.5, ratio_im = 0.5):
 def compute_integral(func, z0, z1, loc, par_integ = par_integ):
     a, b, A, B = parametrization_line(z0, z1, loc)
     Ire, Iim = np.zeros(3), np.zeros(3)
-    for ii in range(3):
-        fre = lambda x: get_integrands(a, b, A, B, x, func)[ii].real
-        fim = lambda x: get_integrands(a, b, A, B, x, func)[ii].imag
-        tol, rtol, divmax = par_integ
-        Ire[ii] = romberg(fre, a, b, vec_func = True, tol=tol, rtol=rtol, divmax=divmax)
-        Iim[ii] = romberg(fim, a, b, vec_func = True, tol=tol, rtol=rtol, divmax=divmax)
-    return ( Ire + 1j*Iim )/(2*1j*pi)
+    tol, rtol, divmax = par_integ
+    f = lambda x: get_integrands(a, b, A, B, x, func)
+    I = romberg(f, a, b,  tol=tol, rtol=rtol, divmax=divmax, size = 3)
+    return I/(2*1j*pi)
 
 def ispole(func, z0, z1, tols = tols, par_integ = par_integ):
     I = 0
@@ -97,26 +123,44 @@ def ispole(func, z0, z1, tols = tols, par_integ = par_integ):
     return pole, residue, r0, r1, r2, message
 
 
-def pole_hunt(func, z0, z1, tols = tols, par_integ = par_integ, poles = [], residues = [], nb_cuts = 0):
+def get_integrands_circ(t, zp, r, func):
+    K = 1j*r*np.exp(1j*t)
+    fr = K*K*func(zp + r*np.exp(1j*t))
+    return fr#np.array([fr, K*fr, K**2*fr])
+
+def compute_integral_circ(func, zp, r):
+    tol, rtol, divmax = par_integ
+    f = lambda t: get_integrands_circ(t, zp, r, func)
+    I = romberg(f, 0, 2*pi,  tol=tol, rtol=rtol, divmax=divmax, size = 1)
+    return I/(2*1j*pi)
+
+def min_dist(z0,z1,zp):
+    x0, x1, y0, y1, xp, yp = z0.real, z1.real, z0.imag, z1.imag, zp.real, zp.imag
+    return np.min(np.array([xp-x0,yp-y0, x1-xp,y1-yp]))
+
+
+
+def pole_hunt(func, z0, z1, tols = tols, ratio_re = 0.5, ratio_im = 0.5,
+ par_integ = par_integ, poles = [], residues = [], nb_cuts = 0):
     print('nb_cuts = ', nb_cuts)
-    trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#ff884d")
+    trace_rect(plt.gca(), z0, z1, fill = True, linewidth=0, facecolor="#ff884d",alpha = 0.2)
+    trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3,  edgecolor="#ff884d")
     pole, residue, r0, r1, r2, message = ispole(func, z0, z1, tols = tols,  par_integ = par_integ)
     print(message)
-    trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
+    trace_rect(plt.gca(), z0, z1, fill = True,facecolor="w", linewidth=3, edgecolor="#000000")
     if r2:
         print('Cutting in four')
         nb_cuts += 1
-        inv_golden_number =  1/(0.5*(1+np.sqrt(5)))
-        Z = cut_in_four(z0, z1, ratio_re =inv_golden_number , ratio_im =inv_golden_number)
+        Z = cut_in_four(z0, z1, ratio_re =ratio_re , ratio_im =ratio_re)
         for z in Z:
-            _ , _, nb_cuts = pole_hunt(func, z[0], z[1], tols = tols,
+            _ , _, nb_cuts = pole_hunt(func, z[0], z[1], tols = tols, ratio_re =ratio_re , ratio_im =ratio_re,
              par_integ = par_integ, poles = poles, residues= residues, nb_cuts = nb_cuts)
     else:
         if r1:
             print('Found a new pole {}, with residue {}'.format(pole, residue))
             poles.append(pole)
             residues.append(residue)
-            plt.gca().plot(np.real(pole), np.imag(pole), 'o', color = "#ff884d")
+            plt.gca().plot(np.real(pole), np.imag(pole), 'o', color = "#ff884d", ms = 7)
     # trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
     poles, residues = np.array(poles), np.array(residues)
     isort = poles.argsort()

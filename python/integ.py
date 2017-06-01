@@ -47,3 +47,35 @@ print('t1 = ', t1)
         # print('tr2 = ', tr2)
 
         # complex_quadrature(func, a, b, **kwargs)
+
+
+
+
+
+def f(z):
+    return np.sin(1*pi*z)
+
+def funcv(z):
+    ff = f(z)
+    return np.array([ff, z*ff, z**2*ff])
+
+def func(z):
+    return z**2*f(z)
+
+par_integ = (1e-111, 1e-111, 15)
+tol, rtol, divmax = par_integ
+
+
+t0 = time.time()
+I1 = tc.romberg(func, 0,1, vec_func = True, tol=tol, rtol=rtol, divmax=divmax)
+t1 = time.time() - t0
+print('I1 = ', I1)
+print('t1 = ', t1)
+
+t0 = time.time()
+I2 = romberg(funcv, 0,1, tol=tol, rtol=rtol, divmax=divmax)
+t2 = time.time() - t0
+print('I2 = ', I2)
+print('t2 = ', t2)
+
+xs
