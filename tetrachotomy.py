@@ -1,12 +1,14 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-plt.ion()
 import seaborn as sns
+import matplotlib.patches as patches
+
+plt.ion()
 sns.set_context("poster", font_scale=1.)
 sns.set_style("white")
 pi = np.pi
-import matplotlib.patches as patches
+
 
 tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-4 * (1 + 1j))
 par_integ = (1e-8, 1e-8, 15)

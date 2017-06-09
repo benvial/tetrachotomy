@@ -1,28 +1,28 @@
 import numpy as np
-pi = np.pi
 import matplotlib.pyplot as plt
-plt.ion()
 import seaborn as sns
-sns.set_context("poster", font_scale=1.)
-sns.set_style("white")
-cmap = sns.diverging_palette(10, 220, sep=80, n=101, as_cmap=True)
-import tetrachotomy
-import importlib
-importlib.reload(tetrachotomy)
 import time
 from matplotlib.ticker import MaxNLocator
 import tmm
-import tetrachotomy as tc
+import tetrachotomy
+import importlib
+from poles_multilayer_analytical import *
 
+importlib.reload(tetrachotomy)
+plt.ion()
+sns.set_context("poster", font_scale=1.)
+sns.set_style("white")
+cmap = sns.diverging_palette(10, 220, sep=80, n=101, as_cmap=True)
+pi = np.pi
 
-tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-6 * (1 + 1j))
-par_integ = (1e-6, 1e-6, 11)
-tol_pol = 1e-13 * (1 + 1j)
-tol_res = 1e-13 * (1 + 1j)
+tols = (1e-8 * (1 + 1j), 1e-8 * (1 + 1j), 1e-8 * (1 + 1j))
+par_integ = (1e-8, 1e-8, 10)
+tol_pol = 1e-8 * (1 + 1j)
+tol_res = 1e-8 * (1 + 1j)
 inv_golden_number = 2 / (1 + np.sqrt(5))
 ratio = inv_golden_number
-ratio_circ = inv_golden_number
-nref_max = 20
+ratio_circ = 1-inv_golden_number
+nref_max = 100
 ratio_re, ratio_im = ratio, ratio
 #####################################
 
@@ -30,15 +30,14 @@ z0 = -0.5 - 0.1 * 1j
 z1 = 0.51 + 0.0 * 1j
 
 pol = 'p'
-h, index = 100, 2.2
+h, index = 100, np.sqrt(5)
 d_list = [np.inf, h, np.inf]
 n_list = [1, index, 1]
 
-# d_list = [np.inf, 110, 40, np.inf]
-# n_list = [1, 2,4, 1]
+d_list = [np.inf, 110, 40, np.inf]
+n_list = [1, 2, 4, 1]
 
 th_0 = 0
-
 
 def func0(z):
     if z == 0:
@@ -47,8 +46,16 @@ def func0(z):
     result = (tmm.coh_tmm(pol, n_list, d_list, th_0, lam_vac)['t'])
     return result
 
-
 func = np.vectorize(func0)
+
+# toreplace = [(epsilon, index**2), (d, h), (k, k* (2 * pi / h))]
+# det_subs = det_system.subs(toreplace)
+# func = sy.lambdify(k, k**2/det_subs, "numpy")
+#
+# t0= time.time()
+# func(1)
+# t1= time.time()-t0
+# print('t1=', t1)
 
 Nmax = 2
 alpha = (index + 1) / (index - 1)
@@ -98,7 +105,7 @@ plt.gca().plot(np.real(poles_analytic), np.imag(poles_analytic), 's')
 # plt.axis('equal')
 
 
-poles, residues, nb_cuts = tc.pole_hunt(func, z0, z1, tols=tols, ratio_re=ratio_re, ratio_im=ratio_re,
+poles, residues, nb_cuts = tetrachotomy.pole_hunt(func, z0, z1, tols=tols, ratio_re=ratio_re, ratio_im=ratio_re,
                                         nref_max=nref_max, ratio_circ=ratio_circ, tol_pol=tol_pol, tol_res=tol_res,
                                         par_integ=par_integ, poles=[], residues=[], nb_cuts=0)
 print('poles = ', poles)
