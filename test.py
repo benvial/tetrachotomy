@@ -26,27 +26,39 @@ nref_max = 100
 ratio_re, ratio_im = ratio, ratio
 #####################################
 
-z0 = -0.5 - 0.1 * 1j
-z1 = 0.51 + 0.0 * 1j
+z0 = 0.01 - 0.3 * 1j
+z1 = 2 + 0.0 * 1j
 
 pol = 'p'
 h, index = 100, np.sqrt(5)
 d_list = [np.inf, h, np.inf]
 n_list = [1, index, 1]
 
-d_list = [np.inf, 110, 40, np.inf]
-n_list = [1, 2, 4, 1]
+# d_list = [np.inf, 110, 40, np.inf]
+# n_list = [1, 2, 4, 1]
 
 th_0 = 0
+
+def epsilon_dispersive(z):
+    zp = 1-0.1*1j
+    zd = 0
+    return 5 - zp**2/(z**2-zd**2)
 
 def func0(z):
     if z == 0:
         z = 1e-16
     lam_vac = 2 * pi / z / (2 * pi / h)
+    epsilon_slab = epsilon_dispersive(z)
+    index = np.sqrt(epsilon_slab)
+    n_list = [1, index, 1]
     result = (tmm.coh_tmm(pol, n_list, d_list, th_0, lam_vac)['t'])
     return result
 
 func = np.vectorize(func0)
+
+
+
+# func = lambda k: det_f(k*(2*pi/h))
 
 # toreplace = [(epsilon, index**2), (d, h), (k, k* (2 * pi / h))]
 # det_subs = det_system.subs(toreplace)
@@ -57,7 +69,7 @@ func = np.vectorize(func0)
 # t1= time.time()-t0
 # print('t1=', t1)
 
-Nmax = 2
+Nmax = 6
 alpha = (index + 1) / (index - 1)
 poles_analytic = 1 / (h * index) * (np.arange(-Nmax, Nmax + 1)
                                     * pi - 1j * np.log(alpha)) / (2 * pi / h)
