@@ -8,7 +8,8 @@ plt.ion()
 sns.set_context("poster", font_scale=1.)
 sns.set_style("white")
 pi = np.pi
-
+plot_rect = False
+plot_circ = False
 
 tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-4 * (1 + 1j))
 par_integ = (1e-8, 1e-8, 15)
@@ -184,10 +185,11 @@ def refine_pole(func, z0, z1, zp, zr, tol_pol=tol_pol, tol_res=tol_res,
     nref = 0
     while nref < nref_max and (conv_pol_re > tol_pol.real or
                                conv_pol_im > tol_pol.imag or conv_res_re > tol_res.real or conv_res_im > tol_res.imag):
-        circ_b = trace_circ(plt.gca(), zp, r, fill=False,
-                            linewidth=3,  edgecolor="#ff884d")
-        circ = trace_circ(plt.gca(), zp, r, fill=True,
-                          linewidth=0, facecolor="#ff884d", alpha=0.2)
+        if plot_circ:
+            circ_b = trace_circ(plt.gca(), zp, r, fill=False,
+                                linewidth=3,  edgecolor="#ff884d")
+            circ = trace_circ(plt.gca(), zp, r, fill=True,
+                              linewidth=0, facecolor="#ff884d", alpha=0.2)
         I = compute_integral_circ(func, zp, r)
         pole_ref, residue_ref = I[1] / I[0], I[0]
         print('Refined pole {}, with residue {}'.format(pole_ref, residue_ref))
@@ -202,8 +204,9 @@ def refine_pole(func, z0, z1, zp, zr, tol_pol=tol_pol, tol_res=tol_res,
         r = r * ratio_circ
         zp = pole_ref
         zr = residue_ref
-        circ.remove()
-        circ_b.remove()
+        if plot_circ:
+            circ.remove()
+            circ_b.remove()
         nref += 1
         if nref >= nref_max:
             print('Accuracy warning, nref_max exceeded')
@@ -214,15 +217,16 @@ def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100,
               tol_pol=tol_pol, tol_res=tol_res,
               par_integ=par_integ, poles=[], residues=[], nb_cuts=0):
     print('nb_cuts = ', nb_cuts)
-    trace_rect(plt.gca(), z0, z1, fill=True, linewidth=0,
-               facecolor="#ff884d", alpha=0.2)
-    trace_rect(plt.gca(), z0, z1, fill=False,
-               linewidth=3,  edgecolor="#ff884d")
+    if plot_rect:
+        trace_rect(plt.gca(), z0, z1, fill=True, linewidth=0,
+                   facecolor="#ff884d", alpha=0.2)
+        trace_rect(plt.gca(), z0, z1, fill=False,
+                   linewidth=3,  edgecolor="#ff884d")
+        trace_rect(plt.gca(), z0, z1, fill=True, facecolor="w",
+                   linewidth=3, edgecolor="#000000")
     pole, residue, r0, r1, r2, message = ispole(
         func, z0, z1, tols=tols,  par_integ=par_integ)
     print(message)
-    trace_rect(plt.gca(), z0, z1, fill=True, facecolor="w",
-               linewidth=3, edgecolor="#000000")
     if r2:
         print('Cutting in four')
         nb_cuts += 1
@@ -239,6 +243,7 @@ def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100,
             poles.append(pole)
             residues.append(residue)
             plt.gca().plot(np.real(pole), np.imag(pole), 'o', color="#ff884d", ms=7)
+            plt.pause(0.0001)
     # trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
     poles, residues = np.array(poles), np.array(residues)
     isort = poles.real.argsort()

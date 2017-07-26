@@ -15,10 +15,10 @@ sns.set_style("white")
 cmap = sns.diverging_palette(10, 220, sep=80, n=101, as_cmap=True)
 pi = np.pi
 
-tols = (1e-8 * (1 + 1j), 1e-8 * (1 + 1j), 1e-8 * (1 + 1j))
-par_integ = (1e-8, 1e-8, 10)
-tol_pol = 1e-8 * (1 + 1j)
-tol_res = 1e-8 * (1 + 1j)
+tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-6 * (1 + 1j))
+par_integ = (1e-6, 1e-6, 10)
+tol_pol = 1e-6 * (1 + 1j)
+tol_res = 1e-6 * (1 + 1j)
 inv_golden_number = 2 / (1 + np.sqrt(5))
 ratio = inv_golden_number
 ratio_circ = 1-inv_golden_number
@@ -26,7 +26,7 @@ nref_max = 100
 ratio_re, ratio_im = ratio, ratio
 #####################################
 
-z0 = 0.01 - 0.3 * 1j
+z0 = 0.1 - 0.3 * 1j
 z1 = 2 + 0.0 * 1j
 
 pol = 'p'
@@ -39,10 +39,13 @@ n_list = [1, index, 1]
 
 th_0 = 0
 
+
 def epsilon_dispersive(z):
-    zp = 1-0.1*1j
-    zd = 0
-    return 5 - zp**2/(z**2-zd**2)
+    eps_inf = 5
+    zp = 0.4-0.*1j
+    zd = 1-0.01*1j
+    return eps_inf - zp**2/(z**2-zd**2)
+
 
 def func0(z):
     if z == 0:
@@ -54,15 +57,16 @@ def func0(z):
     result = (tmm.coh_tmm(pol, n_list, d_list, th_0, lam_vac)['t'])
     return result
 
+
 func = np.vectorize(func0)
 
+# func = lambda k: fpoles(k*(2*pi/h))
 
-
-# func = lambda k: det_f(k*(2*pi/h))
-
-# toreplace = [(epsilon, index**2), (d, h), (k, k* (2 * pi / h))]
-# det_subs = det_system.subs(toreplace)
-# func = sy.lambdify(k, k**2/det_subs, "numpy")
+toreplace = [(k, k*(2 * pi / h)), (epsilon_list[1], epsilon_dispersive(k)), (h_list[0], h)]
+toreplace.append((epsilon_list[0], epsilon_np[0]))
+toreplace.append((epsilon_list[-1], epsilon_np[-1]))
+det_subs = det_system.subs(toreplace)
+func = sy.lambdify(k, k**2/det_subs, "numpy")
 #
 # t0= time.time()
 # func(1)

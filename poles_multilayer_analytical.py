@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.ticker import MaxNLocator
 import time
-pi=np.pi
+pi = np.pi
 plt.ion()
 sns.set_context("poster", font_scale=1.)
 sns.set_style("white")
@@ -83,12 +83,12 @@ for i in range(0, nlay):
     toreplace.append( (h_list[i], h_np[i]))
 
 det_subs = det_system.subs(toreplace)
-det_f = sy.lambdify(k, k**2/det_subs, "numpy")
+fpoles = sy.lambdify(k, k**2/det_subs, "numpy")
 
-# det_f = sy.lambdify(k, det_subs, "numpy")
+# fpoles = sy.lambdify(k, det_subs, "numpy")
 
 # k_np = np.linspace(0.001, 0.1, 1111)
-# det_np = det_f(k_np)
+# det_np = fpoles(k_np)
 # plt.clf()
 # plt.plot(k_np, np.abs(det_np/k_np**2))
 
@@ -96,13 +96,13 @@ kre, kim = np.meshgrid(np.linspace(0.01, 2, 111), np.linspace(-0.3, 0., 111))
 
 kcplx = kre + 1j*kim
 
-det_cplx = det_f(kcplx*(2*pi/htot))
-# det_cplx[np.isnan(det_cplx)] = 1
-yplt = np.log10(np.abs(det_cplx))
+fpoles_cplx = fpoles(kcplx*(2*pi/htot))
+# fpoles_cplx[np.isnan(fpoles_cplx)] = 1
+yplt = np.log10(np.abs(fpoles_cplx))
 
 
 t0= time.time()
-det_f(1)
+fpoles(1)
 t1= time.time()-t0
 print('t1=', t1)
 
