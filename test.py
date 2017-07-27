@@ -17,8 +17,8 @@ pi = np.pi
 
 tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-6 * (1 + 1j))
 par_integ = (1e-6, 1e-6, 10)
-tol_pol = 1e-6 * (1 + 1j)
-tol_res = 1e-6 * (1 + 1j)
+tol_pol = 1e-3 * (1 + 1j)
+tol_res = 1e-3 * (1 + 1j)
 inv_golden_number = 2 / (1 + np.sqrt(5))
 ratio = inv_golden_number
 ratio_circ = 1-inv_golden_number
@@ -26,8 +26,8 @@ nref_max = 100
 ratio_re, ratio_im = ratio, ratio
 #####################################
 
-z0 = 0.1 - 0.3 * 1j
-z1 = 2 + 0.0 * 1j
+z0 = -0.27 - 0.1 * 1j
+z1 = 0.25 - 0.001 * 1j
 
 pol = 'p'
 h, index = 100, np.sqrt(5)
@@ -62,11 +62,7 @@ func = np.vectorize(func0)
 
 # func = lambda k: fpoles(k*(2*pi/h))
 
-toreplace = [(k, k*(2 * pi / h)), (epsilon_list[1], epsilon_dispersive(k)), (h_list[0], h)]
-toreplace.append((epsilon_list[0], epsilon_np[0]))
-toreplace.append((epsilon_list[-1], epsilon_np[-1]))
-det_subs = det_system.subs(toreplace)
-func = sy.lambdify(k, k**2/det_subs, "numpy")
+
 #
 # t0= time.time()
 # func(1)
@@ -120,63 +116,101 @@ plt.title(r'Spectrum in the complex $k$-plane')
 plt.gca().plot(np.real(poles_analytic), np.imag(poles_analytic), 's')
 # plt.axis('equal')
 
+Zy = np.linspace(0.0, 1, 3)*(2*pi/h)
 
-poles, residues, nb_cuts = tetrachotomy.pole_hunt(func, z0, z1, tols=tols, ratio_re=ratio_re, ratio_im=ratio_re,
-                                        nref_max=nref_max, ratio_circ=ratio_circ, tol_pol=tol_pol, tol_res=tol_res,
-                                        par_integ=par_integ, poles=[], residues=[], nb_cuts=0)
-print('poles = ', poles)
-print('residues = ', residues)
-print('nb_cuts = ', nb_cuts)
-
-err_re = np.abs(poles.real - poles_analytic.real)
-err_im = np.abs(poles.imag - poles_analytic.imag)
-err_abs = np.abs(poles_analytic - poles)
-print('POLES')
-print('  errors on real part: ', err_re)
-print('  mean: ', np.mean(err_re))
-print('  errors on imaginary part: ', err_im)
-print('  mean: ', np.mean(err_im))
-print('  errors module: ', err_abs)
-print('  mean: ', np.mean(err_abs))
+epsi = index**2
 
 
-res_err_re = np.abs(residues.real - zres.real)
-res_err_im = np.abs(residues.imag - zres.imag)
-res_err_abs = np.abs(zres - residues)
-print('RESIDUES')
-print('  errors on real part: ', res_err_re)
-print('  mean: ', np.mean(res_err_re))
-print('  errors on imaginary part: ', res_err_im)
-print('  mean: ', np.mean(res_err_im))
-print('  errors module: ', res_err_abs)
-print('  mean: ', np.mean(res_err_abs))
-
-
-x = np.linspace(x0, x1, 101)
-y = np.linspace(y0, y1, 101)
-xx, yy = np.meshgrid(x, y)
-zz = xx + 1j * yy
-fcplx = func(zz)
-fplot = np.log10(np.abs(fcplx))
-fplot = fcplx.imag
-
-
-fig = plt.figure()
 # plt.clf()
-ax = fig.add_subplot(111)  # , aspect='equal')
-cmap = sns.diverging_palette(10, 220, sep=20, n=101, as_cmap=True)
-levels = MaxNLocator(nbins=11).tick_values(fplot.min(), fplot.max() * 0.1)
 
 
-levels = MaxNLocator(nbins=11).tick_values(-11, 11)
-plt.contourf(xx, yy, fplot, cmap=cmap, levels=levels)
-plt.colorbar()
-plt.plot(np.real(poles), np.imag(poles), 'ok')
-ax.set_xlim((x0, x1))
-ax.set_ylim((y0, y1))
-plt.xlabel(r'Re $k_n$')
-plt.ylabel(r'Im $k_n$')
+for zy in Zy:
+
+    # toreplace = [(ky, zy), (k, k*(2 * pi / h)), (epsilon_list[1], index**2), (h_list[0], h)]
+    # toreplace.append((epsilon_list[0], n_list[0]**2))
+    # toreplace.append((epsilon_list[-1], n_list[-1]**2))
+    # det_subs = det_system.subs(toreplace)
+    # func = sy.lambdify(k, 1**2/det_subs, "numpy")
+
+    def sec_eq(k0):
+        z = k0*(2*pi/h)
+        k = k0*np.sqrt(k0**2 - zy**2)
+        q2 = epsi*z**2 + (epsi - 1) * zy**2
+        q = np.sign(q2.real)*np.sqrt(q2)
+        a1 = (z-q)*np.exp(1j*h*q/2)
+        a2 = (z+q)*np.exp(-1j*h*q/2)
+        det = (a1+a2)*(a1-a2)
+        # det = ((z+q)/(z-q))**2 - np.exp(2*1j*h*q)
+        return (1/det)
+    func = np.vectorize(sec_eq)
+
+
+    # zrange = np.linspace(x0,x1,1000)
+    # fplot = func(1j*zrange)
+    # plt.plot(zrange, np.log10(np.abs(fplot)))
+    # plt.pause(0.0001)
+
+
+    poles, residues, nb_cuts = tetrachotomy.pole_hunt(func, z0, z1, tols=tols, ratio_re=ratio_re, ratio_im=ratio_re,
+                                            nref_max=nref_max, ratio_circ=ratio_circ, tol_pol=tol_pol, tol_res=tol_res,
+                                            par_integ=par_integ, poles=[], residues=[], nb_cuts=0)
+    print('poles = ', poles)
+    print('residues = ', residues)
+    print('nb_cuts = ', nb_cuts)
 #
+# pp, zzy = np.meshgrid(poles_analytic, Zy)
+# poles_analytic_zy = np.sqrt(pp**2 + zzy**2*index**2)
+# plt.gca().plot(np.real(poles_analytic_zy), np.imag(poles_analytic_zy), '--b')
+# #
+# err_re = np.abs(poles.real - poles_analytic.real)
+# err_im = np.abs(poles.imag - poles_analytic.imag)
+# err_abs = np.abs(poles_analytic - poles)
+# print('POLES')
+# print('  errors on real part: ', err_re)
+# print('  mean: ', np.mean(err_re))
+# print('  errors on imaginary part: ', err_im)
+# print('  mean: ', np.mean(err_im))
+# print('  errors module: ', err_abs)
+# print('  mean: ', np.mean(err_abs))
+#
+#
+# res_err_re = np.abs(residues.real - zres.real)
+# res_err_im = np.abs(residues.imag - zres.imag)
+# res_err_abs = np.abs(zres - residues)
+# print('RESIDUES')
+# print('  errors on real part: ', res_err_re)
+# print('  mean: ', np.mean(res_err_re))
+# print('  errors on imaginary part: ', res_err_im)
+# print('  mean: ', np.mean(res_err_im))
+# print('  errors module: ', res_err_abs)
+# print('  mean: ', np.mean(res_err_abs))
+#
+#
+# x = np.linspace(x0, x1, 101)
+# y = np.linspace(y0, y1, 101)
+# xx, yy = np.meshgrid(x, y)
+# zz = xx + 1j * yy
+# fcplx = func(zz)
+# fplot = np.log10(np.abs(fcplx))
+# fplot = fcplx.imag
+#
+#
+# fig = plt.figure()
+# # plt.clf()
+# ax = fig.add_subplot(111)  # , aspect='equal')
+# cmap = sns.diverging_palette(10, 220, sep=20, n=101, as_cmap=True)
+# levels = MaxNLocator(nbins=11).tick_values(fplot.min(), fplot.max() * 0.1)
+#
+#
+# levels = MaxNLocator(nbins=11).tick_values(-11, 11)
+# plt.contourf(xx, yy, fplot, cmap=cmap, levels=levels)
+# plt.colorbar()
+# plt.plot(np.real(poles), np.imag(poles), 'ok')
+# ax.set_xlim((x0, x1))
+# ax.set_ylim((y0, y1))
+# plt.xlabel(r'Re $k_n$')
+# plt.ylabel(r'Im $k_n$')
+# #
 # xp = np.linspace(x0, x1, 101)
 #
 # plt.figure()
