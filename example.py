@@ -6,7 +6,6 @@ from matplotlib.ticker import MaxNLocator
 import tmm
 import tetrachotomy
 import importlib
-from poles_multilayer_analytical import *
 
 importlib.reload(tetrachotomy)
 plt.ion()
