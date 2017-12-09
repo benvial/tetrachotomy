@@ -1,2 +1,5 @@
-# tetrachotomy
-Pole hunting in the complex plane
+![Example](example.png)
+
+# Tetrachotomy
+A numerical method to find the simple poles and residues 
+of a function of a complex variable.

@@ -10,6 +10,7 @@ sns.set_style("white")
 pi = np.pi
 plot_rect = False
 plot_circ = False
+plot_poles = False
 
 tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-4 * (1 + 1j))
 par_integ = (1e-8, 1e-8, 15)
@@ -18,7 +19,7 @@ tol_res = 1e-10 * (1 + 1j)
 tol = 1e3 * np.finfo(float).eps
 
 
-def romberg(f, a, b, divmax=10, tol_re=1e-6, tol_im=1e-6, size=1):
+def romberg(f, a, b, divmax=10, tol_re=1e-6, tol_im=1e-6, size=1, verbose=0):
     r = np.zeros((divmax + 2, divmax + 2, size), dtype=complex)
     h = b - a
     r[0, 0, :] = 0.5 * h * (f(a) + f(b))
@@ -47,8 +48,9 @@ def romberg(f, a, b, divmax=10, tol_re=1e-6, tol_im=1e-6, size=1):
         if i > 0 and (np.all(current_tol_re < tol_re) or np.all(current_tol_im < tol_im)):
             #  or np.all(current_rtol_re < rtol) or np.all(current_rtol_im < rtol)  ):
             return r[i, i, :]
-    print('Accuracy warning: divmax exceeded, tol_re = {},  tol_im = {}'.format(
-        current_tol_re, current_tol_im))
+    if verbose:
+        print('Accuracy warning: divmax exceeded, tol_re = {}, tol_im = {}'.format(
+            current_tol_re, current_tol_im))
     return r[i, i, :]
 
 
@@ -178,9 +180,10 @@ def min_dist(z0, z1, zp):
 
 
 def refine_pole(func, z0, z1, zp, zr, tol_pol=tol_pol, tol_res=tol_res,
-                nref_max=100, ratio_circ=0.5):
+                nref_max=100, ratio_circ=0.5, verbose=0):
     r = min_dist(z0, z1, zp)
-    print('refining pole')
+    if verbose:
+        print('refining pole')
     conv_pol_re, conv_pol_im, conv_res_re, conv_res_im = 1, 1, 1, 1
     nref = 0
     while nref < nref_max and (conv_pol_re > tol_pol.real or
@@ -192,15 +195,16 @@ def refine_pole(func, z0, z1, zp, zr, tol_pol=tol_pol, tol_res=tol_res,
                               linewidth=0, facecolor="#ff884d", alpha=0.2)
         I = compute_integral_circ(func, zp, r)
         pole_ref, residue_ref = I[1] / I[0], I[0]
-        print('Refined pole {}, with residue {}'.format(pole_ref, residue_ref))
         conv_pol_re = np.abs(np.real(zp - pole_ref))
         conv_pol_im = np.abs(np.imag(zp - pole_ref))
         conv_res_re = np.abs(np.real(zr - residue_ref))
         conv_res_im = np.abs(np.imag(zr - residue_ref))
-        print('conv_pol_re = ', conv_pol_re)
-        print('conv_pol_im = ', conv_pol_im)
-        print('conv_res_re = ', conv_res_re)
-        print('conv_res_im = ', conv_res_im)
+        if verbose:
+            print('Refined pole {}, with residue {}'.format(pole_ref, residue_ref))
+            print('conv_pol_re = ', conv_pol_re)
+            print('conv_pol_im = ', conv_pol_im)
+            print('conv_res_re = ', conv_res_re)
+            print('conv_res_im = ', conv_res_im)
         r = r * ratio_circ
         zp = pole_ref
         zr = residue_ref
@@ -209,14 +213,15 @@ def refine_pole(func, z0, z1, zp, zr, tol_pol=tol_pol, tol_res=tol_res,
             circ_b.remove()
         nref += 1
         if nref >= nref_max:
-            print('Accuracy warning, nref_max exceeded')
+            if verbose:
+                print('Accuracy warning, nref_max exceeded')
     return pole_ref, residue_ref
 
 
 def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100, ratio_circ=0.5,
               tol_pol=tol_pol, tol_res=tol_res,
-              par_integ=par_integ, poles=[], residues=[], nb_cuts=0):
-    print('nb_cuts = ', nb_cuts)
+              par_integ=par_integ, poles=[], residues=[], nb_cuts=0, verbose=0):
+
     if plot_rect:
         trace_rect(plt.gca(), z0, z1, fill=True, linewidth=0,
                    facecolor="#ff884d", alpha=0.2)
@@ -226,9 +231,12 @@ def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100,
                    linewidth=3, edgecolor="#000000")
     pole, residue, r0, r1, r2, message = ispole(
         func, z0, z1, tols=tols,  par_integ=par_integ)
-    print(message)
+    if verbose:
+        print('nb_cuts = ', nb_cuts)
+        print(message)
     if r2:
-        print('Cutting in four')
+        if verbose:
+            print('Cutting in four')
         nb_cuts += 1
         Z = cut_in_four(z0, z1, ratio_re=ratio_re, ratio_im=ratio_im)
         for z in Z:
@@ -237,13 +245,15 @@ def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100,
                                       par_integ=par_integ, poles=poles, residues=residues, nb_cuts=nb_cuts)
     else:
         if r1:
-            print('Found a new pole {}, with residue {}'.format(pole, residue))
+            if verbose:
+                print('Found a new pole {}, with residue {}'.format(pole, residue))
             pole, residue = refine_pole(func, z0, z1, pole, residue, tol_pol=tol_pol, tol_res=tol_res,
                                         nref_max=nref_max, ratio_circ=ratio_circ)
             poles.append(pole)
             residues.append(residue)
-            plt.gca().plot(np.real(pole), np.imag(pole), 'o', color="#ff884d", ms=7)
-            plt.pause(0.0001)
+            if plot_poles:
+                plt.gca().plot(np.real(pole), np.imag(pole), 'o', color="#ff884d", ms=7)
+                plt.pause(0.0001)
     # trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
     poles, residues = np.array(poles), np.array(residues)
     isort = poles.real.argsort()
