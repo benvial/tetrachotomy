@@ -1,4 +1,4 @@
-![Example](example.png)
+![Example](./examples/example.png)
 
 # Tetrachotomy
 A numerical method to find the simple poles and residues 
