@@ -4,4 +4,4 @@
 # License: MIT
 
 
-from .tetra import *
+from .tetrachotomy import *
