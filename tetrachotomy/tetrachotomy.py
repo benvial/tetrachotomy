@@ -8,9 +8,9 @@ plt.ion()
 sns.set_context("poster", font_scale=1.)
 sns.set_style("white")
 pi = np.pi
-plot_rect = False
-plot_circ = False
-plot_poles = False
+plot_rect = True
+plot_circ = True
+plot_poles = True
 
 tols = (1e-6 * (1 + 1j), 1e-6 * (1 + 1j), 1e-4 * (1 + 1j))
 par_integ = (1e-8, 1e-8, 15)
