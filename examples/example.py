@@ -66,17 +66,17 @@ poles, residues, nb_cuts = tetrachotomy.pole_hunt(func, z0, z1, tols=tols, ratio
 print('poles = ', poles)
 print('residues = ', residues)
 print('nb_cuts = ', nb_cuts)
-
-
-fig = plt.figure()
-fig = plt.gcf()
-ax = fig.add_subplot(111)  # , aspect='equal')
-ax.set_xlim((x0, x1))
-ax.set_ylim((y0, y1))
-plt.xlabel(r'Re $z$')
-plt.ylabel(r'Im $z$')
-plt.gca().plot(np.real(poles_test), np.imag(poles_test), 'sk')
-plt.gca().plot(np.real(poles), np.imag(poles), 'or')
+# 
+#
+# fig = plt.figure()
+# fig = plt.gcf()
+# ax = fig.add_subplot(111)  # , aspect='equal')
+# ax.set_xlim((x0, x1))
+# ax.set_ylim((y0, y1))
+# plt.xlabel(r'Re $z$')
+# plt.ylabel(r'Im $z$')
+# plt.gca().plot(np.real(poles_test), np.imag(poles_test), 'sk')
+# plt.gca().plot(np.real(poles), np.imag(poles), 'or')
 
 err_p = (poles - poles_test)
 err_r = (residues - residues_test)

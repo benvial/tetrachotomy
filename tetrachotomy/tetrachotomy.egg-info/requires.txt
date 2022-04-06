@@ -1,0 +1,5 @@
+numpy>=1.9
+matplotlib
+
+[:python_version < "3.8"]
+importlib_metadata

@@ -1,0 +1,36 @@
+Metadata-Version: 2.1
+Name: tetrachotomy
+Version: 0.0.1
+Summary: Hunting poles in the complex plane
+Home-page: https://github.com/benvial/tetrachotomy
+Author: Benjamin Vial
+License: GPL-3.0-or-later
+Project-URL: Code, https://github.com/benvial/tetrachotomy
+Project-URL: Documentation, 
+Project-URL: Issues, https://nannos.gitlab.io/issues
+Keywords: fourier modal method,diffraction,optics,photonics,metamaterials
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Utilities
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+
+![Example](./examples/example.png)
+
+# Tetrachotomy
+A numerical method to find the simple poles and residues 
+of a function of a complex variable.
+
+

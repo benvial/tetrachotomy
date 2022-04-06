@@ -1,12 +1,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import matplotlib.patches as patches
 
-plt.ion()
-sns.set_context("poster", font_scale=1.)
-sns.set_style("white")
 pi = np.pi
 plot_rect = True
 plot_circ = True
@@ -62,6 +58,7 @@ def trace_rect(ax, z0, z1, **kwargs):
         **kwargs
     )
     ax.add_patch(patch)
+    plt.tight_layout()
     plt.pause(0.0001)
     return patch
 
@@ -190,7 +187,7 @@ def refine_pole(func, z0, z1, zp, zr, tol_pol=tol_pol, tol_res=tol_res,
                                conv_pol_im > tol_pol.imag or conv_res_re > tol_res.real or conv_res_im > tol_res.imag):
         if plot_circ:
             circ_b = trace_circ(plt.gca(), zp, r, fill=False,
-                                linewidth=3,  edgecolor="#ff884d")
+                                linewidth=0.1,  edgecolor="#ff884d")
             circ = trace_circ(plt.gca(), zp, r, fill=True,
                               linewidth=0, facecolor="#ff884d", alpha=0.2)
         I = compute_integral_circ(func, zp, r)
@@ -226,9 +223,9 @@ def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100,
         trace_rect(plt.gca(), z0, z1, fill=True, linewidth=0,
                    facecolor="#ff884d", alpha=0.2)
         trace_rect(plt.gca(), z0, z1, fill=False,
-                   linewidth=3,  edgecolor="#ff884d")
+                   linewidth=0.1,  edgecolor="#ff884d")
         trace_rect(plt.gca(), z0, z1, fill=True, facecolor="w",
-                   linewidth=3, edgecolor="#000000")
+                   linewidth=0.1, edgecolor="#000000")
     pole, residue, r0, r1, r2, message = ispole(
         func, z0, z1, tols=tols,  par_integ=par_integ)
     if verbose:
@@ -252,7 +249,7 @@ def pole_hunt(func, z0, z1, tols=tols, ratio_re=0.5, ratio_im=0.5, nref_max=100,
             poles.append(pole)
             residues.append(residue)
             if plot_poles:
-                plt.gca().plot(np.real(pole), np.imag(pole), 'o', color="#ff884d", ms=7)
+                plt.gca().plot(np.real(pole), np.imag(pole), 'o', color="#ff884d", linewidth=1)
                 plt.pause(0.0001)
     # trace_rect(plt.gca(), z0, z1, fill = False, linewidth=3, edgecolor="#000000")
     poles, residues = np.array(poles), np.array(residues)
