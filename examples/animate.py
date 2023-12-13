@@ -3,10 +3,12 @@
 # Author: Benjamin Vial
 # License: GPLv3
 
-from PIL import Image
-import numpy as np
 import glob
 import os
+
+import numpy as np
+from PIL import Image
+
 
 def animate_field(filename="animation.gif", **kwargs):
     tmpdir = "."

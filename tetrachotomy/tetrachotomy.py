@@ -3,10 +3,9 @@ Pole and zeros searching in the complex plane with a contour integral technique
 """
 
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+import matplotlib.pyplot as plt
+import numpy as np
 
 pi = np.pi
 
@@ -27,7 +26,6 @@ tolerances = dict(
 )
 
 
-
 options = dict(
     tolerances=tolerances,
     plot=plot_options,
@@ -37,7 +35,6 @@ options = dict(
     verbose=False,
     refine=True,
 )
-
 
 
 def romberg(f, a, b, divmax=10, tol_re=1e-6, tol_im=1e-6, size=1, verbose=0):
@@ -214,7 +211,6 @@ def min_dist(z0, z1, zp):
     return np.min(np.array([xp - x0, yp - y0, x1 - xp, y1 - yp]))
 
 
-
 def refine_pole(func, z0, z1, zp, zr, options=options):
     tolerances = options["tolerances"]
     tol_pol = tolerances["tol_pol"]
@@ -281,9 +277,9 @@ def pole_hunt(
     z1,
     options=options,
     zeros=False,
-    init = ([], [], 0),
+    init=([], [], 0),
 ):
-    poles, residues, nb_cuts =init
+    poles, residues, nb_cuts = init
     ratio_re, ratio_im, ratio_circ = options["ratios"]
     plot_options = options["plot"]
     tolerances = options["tolerances"]
@@ -354,7 +350,7 @@ def pole_hunt(
                 z[0],
                 z[1],
                 options=options,
-                init = (poles, residues, nb_cuts),
+                init=(poles, residues, nb_cuts),
             )
     else:
         if r1:
@@ -394,7 +390,8 @@ def find_poles(
     z1,
     options=options,
 ):
-    return pole_hunt(func, z0, z1, options=options, zeros=False,init=([], [], 0))
+    return pole_hunt(func, z0, z1, options=options, zeros=False, init=([], [], 0))
+
 
 def find_zeros(
     func,
@@ -402,4 +399,4 @@ def find_zeros(
     z1,
     options=options,
 ):
-    return pole_hunt(func, z0, z1, options=options, zeros=True,init=([], [], 0))
+    return pole_hunt(func, z0, z1, options=options, zeros=True, init=([], [], 0))

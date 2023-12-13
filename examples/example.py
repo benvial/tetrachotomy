@@ -1,6 +1,7 @@
-import tetrachotomy as tc
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+import tetrachotomy as tc
 
 np.random.seed(13)
 plt.ion()
@@ -22,10 +23,9 @@ poles_test = poles_test[isort]
 residues_test = residues_test[isort]
 
 
-
 def func(z):
     N = len(poles_test)
-    out = np.exp(10*z**2)
+    out = np.exp(10 * z**2)
     for i in range(N):
         p = poles_test[i]
         r = residues_test[i]
@@ -76,15 +76,15 @@ print("residues zeros= ", residues_zeros)
 print("nb_cuts zeros = ", nb_cuts_zeros)
 plt.plot(np.real(zeros), np.imag(zeros), "+b")
 
-assert np.allclose(poles,poles_test)
-assert np.allclose(residues,residues_test)
-
+assert np.allclose(poles, poles_test)
+assert np.allclose(residues, residues_test)
 
 
 zeros_test = (-0.5 - 0.5 * 1j + np.random.rand(Np) + 1j * np.random.rand(Np)) * 2
 
 isort = np.argsort(zeros_test)
 zeros_test = zeros_test[isort]
+
 
 def func2(z):
     N = len(poles_test)
@@ -106,7 +106,7 @@ ax.set_ylim((y0, y1))
 plt.xlabel(r"Re $z$")
 plt.ylabel(r"Im $z$")
 plt.axis("scaled")
-cm = ax.pcolormesh(xx, yy, np.log(np.abs(mapf)),cmap="inferno")
+cm = ax.pcolormesh(xx, yy, np.log(np.abs(mapf)), cmap="inferno")
 ax.plot(np.real(poles_test), np.imag(poles_test), "sk")
 ax.plot(np.real(zeros_test), np.imag(zeros_test), "^g")
 plt.colorbar(cm)
@@ -137,6 +137,5 @@ print("residues zeros= ", residues_zeros)
 print("nb_cuts zeros = ", nb_cuts_zeros)
 plt.plot(np.real(zeros), np.imag(zeros), "+b")
 
-assert np.allclose(poles,poles_test)
-assert np.allclose(zeros,zeros_test)
-
+assert np.allclose(poles, poles_test)
+assert np.allclose(zeros, zeros_test)
