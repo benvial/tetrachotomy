@@ -1,48 +1,31 @@
+import tetrachotomy as tc
 import numpy as np
 import matplotlib.pyplot as plt
-import tetrachotomy
-# import importlib
-# importlib.reload(tetrachotomy)
-tetrachotomy.plot_rect = True
-tetrachotomy.plot_circ = True
-tetrachotomy.plot_poles = True
 
+np.random.seed(13)
 plt.ion()
-pi = np.pi
-
-tols = (1e-8 * (1 + 1j), 1e-8 * (1 + 1j), 1e-8 * (1 + 1j))
-par_integ = (1e-8, 1e-8, 13)
-tol_pol = 1e-8 * (1 + 1j)
-tol_res = 1e-8 * (1 + 1j)
-inv_golden_number = 2 / (1 + np.sqrt(5))
-ratio = inv_golden_number
-ratio_circ = 1 - inv_golden_number
-nref_max = 100
-ratio_re, ratio_im = ratio, ratio
-
 
 z0 = -1 - 1 * 1j
 z1 = 1 + 1 * 1j
 x0, x1, y0, y1 = z0.real, z1.real, z0.imag, z1.imag
-#####################################
 
-# poles_test = [0.2 - 0.02*1j, 0.4 - 0.1*1j]
-# residues_test = [2 + 0.1*1j, -10 - 3*1j]
-np.random.seed(200)
 Np = 10
-poles_test = (-0.5 - 0.5 * 1j + np.random.rand(Np) +
-              1j * np.random.rand(Np)) * 2
-residues_test = (-0.5 - 0.5 * 1j + np.random.rand(Np) + 1j *
-                 np.random.rand(Np)) * np.random.rand(1) * 100
+poles_test = (-0.5 - 0.5 * 1j + np.random.rand(Np) + 1j * np.random.rand(Np)) * 2
+residues_test = (
+    (-0.5 - 0.5 * 1j + np.random.rand(Np) + 1j * np.random.rand(Np))
+    * np.random.rand(1)
+    * 100
+)
 
 isort = np.argsort(poles_test)
 poles_test = poles_test[isort]
 residues_test = residues_test[isort]
 
 
+
 def func(z):
     N = len(poles_test)
-    out = 0
+    out = np.exp(10*z**2)
     for i in range(N):
         p = poles_test[i]
         r = residues_test[i]
@@ -50,45 +33,110 @@ def func(z):
     return out
 
 
+xx = np.linspace(x0, x1, 1000)
+yy = np.linspace(y0, y1, 1000)
+X, Y = np.meshgrid(xx, yy)
+Z = X + 1j * Y
+mapf = func(Z)
 
 fig = plt.figure()
 ax = fig.add_subplot(111)  # , aspect='equal')
 ax.set_xlim((x0, x1))
 ax.set_ylim((y0, y1))
-plt.xlabel(r'Re $z$')
-plt.ylabel(r'Im $z$')
-plt.gca().plot(np.real(poles_test), np.imag(poles_test), 'sk')
+plt.xlabel(r"Re $z$")
+plt.ylabel(r"Im $z$")
+plt.axis("scaled")
+cm = ax.pcolormesh(xx, yy, np.log(np.abs(mapf)))
+ax.plot(np.real(poles_test), np.imag(poles_test), "sk")
+plt.colorbar(cm)
 
 
-poles, residues, nb_cuts = tetrachotomy.pole_hunt(func, z0, z1, tols=tols, ratio_re=ratio_re, ratio_im=ratio_re,
-                                                  nref_max=nref_max, ratio_circ=ratio_circ, tol_pol=tol_pol, tol_res=tol_res,
-                                                  par_integ=par_integ, poles=[], residues=[], nb_cuts=0)
-print('poles = ', poles)
-print('residues = ', residues)
-print('nb_cuts = ', nb_cuts)
-# 
-#
-# fig = plt.figure()
-# fig = plt.gcf()
-# ax = fig.add_subplot(111)  # , aspect='equal')
-# ax.set_xlim((x0, x1))
-# ax.set_ylim((y0, y1))
-# plt.xlabel(r'Re $z$')
-# plt.ylabel(r'Im $z$')
-# plt.gca().plot(np.real(poles_test), np.imag(poles_test), 'sk')
-# plt.gca().plot(np.real(poles), np.imag(poles), 'or')
+poles, residues, nb_cuts = tc.find_poles(
+    func,
+    z0,
+    z1,
+)
 
-err_p = (poles - poles_test)
-err_r = (residues - residues_test)
 
-erel_p_re = np.abs(err_p.real / poles_test.real)
-erel_p_im = np.abs(err_p.imag / poles_test.imag)
-erel_r_re = np.abs(err_r.real / residues_test.real)
-erel_r_im = np.abs(err_r.imag / residues_test.imag)
-print("--- RELATIVE ERRORS ---")
-print("  poles")
-print("     real: ", erel_p_re)
-print("     imag: ", erel_p_im)
-print("  residues")
-print("     real: ", erel_r_re)
-print("     imag: ", erel_r_im)
+print("poles = ", poles)
+print("residues = ", residues)
+print("nb_cuts = ", nb_cuts)
+
+
+plt.plot(np.real(poles), np.imag(poles), "or")
+
+zeros, residues_zeros, nb_cuts_zeros = tc.find_zeros(
+    func,
+    z0,
+    z1,
+)
+
+print("zeros = ", zeros)
+print("residues zeros= ", residues_zeros)
+print("nb_cuts zeros = ", nb_cuts_zeros)
+plt.plot(np.real(zeros), np.imag(zeros), "+b")
+
+assert np.allclose(poles,poles_test)
+assert np.allclose(residues,residues_test)
+
+
+
+zeros_test = (-0.5 - 0.5 * 1j + np.random.rand(Np) + 1j * np.random.rand(Np)) * 2
+
+isort = np.argsort(zeros_test)
+zeros_test = zeros_test[isort]
+
+def func2(z):
+    N = len(poles_test)
+    out = 1
+    for i in range(N):
+        zero = zeros_test[i]
+        pole = poles_test[i]
+        r = residues_test[i]
+        out *= (z - zero) / (z - pole)
+    return out
+
+
+mapf = func2(Z)
+
+fig = plt.figure()
+ax = fig.add_subplot(111)  # , aspect='equal')
+ax.set_xlim((x0, x1))
+ax.set_ylim((y0, y1))
+plt.xlabel(r"Re $z$")
+plt.ylabel(r"Im $z$")
+plt.axis("scaled")
+cm = ax.pcolormesh(xx, yy, np.log(np.abs(mapf)),cmap="inferno")
+ax.plot(np.real(poles_test), np.imag(poles_test), "sk")
+ax.plot(np.real(zeros_test), np.imag(zeros_test), "^g")
+plt.colorbar(cm)
+
+
+poles, residues, nb_cuts = tc.find_poles(
+    func2,
+    z0,
+    z1,
+)
+
+
+print("poles = ", poles)
+print("residues = ", residues)
+print("nb_cuts = ", nb_cuts)
+
+
+plt.plot(np.real(poles), np.imag(poles), "or")
+
+zeros, residues_zeros, nb_cuts_zeros = tc.find_zeros(
+    func2,
+    z0,
+    z1,
+)
+
+print("zeros = ", zeros)
+print("residues zeros= ", residues_zeros)
+print("nb_cuts zeros = ", nb_cuts_zeros)
+plt.plot(np.real(zeros), np.imag(zeros), "+b")
+
+assert np.allclose(poles,poles_test)
+assert np.allclose(zeros,zeros_test)
+
