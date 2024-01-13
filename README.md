@@ -2,5 +2,5 @@
 
 # Tetrachotomy
 
-A numerical method to find the simple poles and residues 
+A numerical method to find poles and zeros 
 of a function of a complex variable.

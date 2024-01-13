@@ -61,7 +61,7 @@ save: style gl
 
 # Check we are on the main branch
 checkmain:
-	@if [ "{{ BRANCH }}" != "main" ]; then exit 1; fi
+	@if [ "{{ BRANCH }}" != "master" ]; then exit 1; fi
 
 # Tag and push tags
 tag: style checkmain

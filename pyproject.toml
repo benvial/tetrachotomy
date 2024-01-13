@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = [{ name = "Benjamin Vial", email = "benjamin.vial84@gmail.com" }]
 maintainers = [{ name = "Benjamin Vial", email = "benjamin.vial84@gmail.com" }]
 description = "Hunting poles and zeros in the complex plane"
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = { file = "README.md", content-type = "text/markdown" }
 license = { file = "LICENSE.txt" }
 keywords = ["zeros search", "zeros search", "complex analysis"]
 classifiers = [
@@ -26,9 +26,9 @@ classifiers = [
     "Topic :: Utilities",
 ]
 requires-python = ">=3.6"
-dependencies = ["numpy"]
+dependencies = ["numpy", "scipy", "colorlog"]
 
-[project.urls] 
+[project.urls]
 "Homepage" = "https://github.com/benvial/tetrachotomy"
 "Bug Reports" = "https://github.com/benvial/tetrachotomy/issues"
 "Source" = "https://github.com/benvial/tetrachotomy"
@@ -37,10 +37,8 @@ dependencies = ["numpy"]
 include = ["tetrachotomy"]
 
 [project.optional-dependencies] # Optional
-plot = [
-    "matplotlib",
-]
+plot = ["matplotlib"]
+
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
-

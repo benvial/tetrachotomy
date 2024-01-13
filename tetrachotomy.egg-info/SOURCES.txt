@@ -1,0 +1,11 @@
+LICENSE.txt
+MANIFEST.in
+README.md
+pyproject.toml
+tetrachotomy/__init__.py
+tetrachotomy/tetrachotomy.py
+tetrachotomy.egg-info/PKG-INFO
+tetrachotomy.egg-info/SOURCES.txt
+tetrachotomy.egg-info/dependency_links.txt
+tetrachotomy.egg-info/requires.txt
+tetrachotomy.egg-info/top_level.txt
