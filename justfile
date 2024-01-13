@@ -55,8 +55,13 @@ repo:
 	xdg-open https://github.com/{{USER_NAME}}/{{PROJECT_NAME}}
 
 
+# Cleanup
+clean:
+    # cd doc && make -s clean
+    rm -rf build dist
+
 # Clean, reformat and push to github
-save: style gl
+save: clean style gl
 
 
 # Check we are on the main branch
