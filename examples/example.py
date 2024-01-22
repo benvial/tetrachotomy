@@ -28,7 +28,7 @@ isort = bk.argsort(poles_test.real)
 poles_test = poles_test[isort]
 residues_test = residues_test[isort]
 
-order = 1
+order = 2
 
 
 def func(z):
@@ -39,7 +39,8 @@ def func(z):
     for i in range(N):
         p = poles_test[i]
         r = residues_test[i]
-        out += r / (z - p) ** (order)
+        order_ = 1 if i == 0 else order
+        out += r / (z - p) ** (order_)
     return out
 
 
@@ -72,7 +73,7 @@ options = tc.get_options()
 options["plot"]["rectangle"] = True
 # options["plot"]["circle"] = True
 options["plot"]["poles"] = True
-options["plot"]["colors"] = "#4d9aff", "#818181"
+options["plot"]["color"] = "#4d9aff"
 options["plot"]["marker"]["value"] = "o"
 options["plot"]["marker"]["size"] = 4
 
@@ -119,7 +120,7 @@ assert bk.allclose(residues, residues_test)
 # plt.plot(bk.real(poles), bk.imag(poles), "or")v
 
 
-options["plot"]["colors"] = "#41c76e", "#818181"
+options["plot"]["color"] = "#41c76e"
 options["plot"]["marker"]["value"] = "+"
 options["plot"]["marker"]["size"] = 6
 res = tc.find_zeros(

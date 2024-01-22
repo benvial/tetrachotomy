@@ -36,5 +36,5 @@ except:
 
     BACKEND = "numpy"
 
+from .core import *
 from .log import *
-from .tetrachotomy import *

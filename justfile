@@ -91,3 +91,6 @@ pypi: package
 # Publish release on pypi
 publish: tag pypi
 
+# Make logo
+logo:
+	MPLBACKEND=agg python dev/logo.py 1523

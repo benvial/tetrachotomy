@@ -55,19 +55,27 @@ plot_options = dict(
     rectangle=False,
     circle=False,
     poles=False,
-    colors=["#ff884d", "#818181"],
-    marker=dict(value="o", size=8),
+    remove=True,
+    alpha=0.05,
+    color="#ff884d",
+    marker=dict(value="o", size=6),
 )
-tol_moments = {"0": 1e-6 * (1 + 1j), "1": 1e-6 * (1 + 1j), "ratio": 1e-4 * (1 + 1j)}
+tol_moments = {"0": 1e-5, "1": 1e-5, "ratio": 1e-4}
 tolerances = dict(
     moments=tol_moments,
-    pole=1e-12 * (1 + 1j),
-    residue=1e-12 * (1 + 1j),
-    integration=dict(tol=1e-6 * (1 + 1j), divmax=10),
+    integration=dict(tol=1e-7, divmax=13),
 )
-ratios = dict(real=0.5, imag=0.5, circ=0.5)
+ratios = dict(real=0.5, imag=0.5)
 
-refine_options = dict(nref_max=0, method="nelder-mead")
+ref_tol = dict(pole=1e-12, residue=1e-12)
+
+refine_options = dict(
+    nref_max=0,
+    method="nelder-mead",
+    circ_ratio=0.9,
+    integration=dict(tol=1e-12, divmax=15),
+    tolerances=ref_tol,
+)
 
 options = dict(
     tolerances=tolerances,
@@ -115,7 +123,7 @@ def romberg(f, a, b, divmax=10, tol_re=1e-6, tol_im=1e-6, size=1):
     return r[i, i], neval
 
 
-def trace_rect(ax, z0, z1, **kwargs):
+def plot_rectangle(ax, z0, z1, **kwargs):
     patch = patches.Rectangle(
         (z0.real, z0.imag),  # (x,y)
         (z1 - z0).real,  # width
@@ -127,7 +135,7 @@ def trace_rect(ax, z0, z1, **kwargs):
     return patch
 
 
-def trace_circ(ax, zp, r, **kwargs):
+def plot_circle(ax, zp, r, **kwargs):
     patch = patches.Circle((zp.real, zp.imag), r, **kwargs)  # center (x,y)  # radius
     ax.add_patch(patch)
     _pause()
@@ -228,13 +236,32 @@ def ispole(func, z0, z1, tols, par_integ, order):
 
     r0, r1, r2 = False, False, False
     pole, residue = [], []
-    # if check_0 < tols[0].real and check_1 < tols[1].real:
+
+    # mid = (z0 + z1) / 2
+    # val_mid = func(mid)
+    # peri = 2 * (z1.real - z0.real) + 2 * (z1.imag - z0.imag)
+    # Iapprox = [1 / (2 * 1j * pi) * mid**n * val_mid * peri for n in range(2)]
+    # cond0_re = abs(1 - I[0].real / Iapprox[0].real)
+    # cond0_im = abs(1 - I[0].imag / Iapprox[0].imag)
+    # cond1_re = abs(1 - I[1].real / Iapprox[1].real)
+    # cond1_im = abs(1 - I[1].imag / Iapprox[1].imag)
+
+    cond0_re = abs(I[0].real)
+    cond0_im = abs(I[0].imag)
+    cond1_re = abs(I[1].real)
+    cond1_im = abs(I[1].imag)
     if (
-        abs(I[0].real) < tols[0].real
-        and abs(I[0].imag) < tols[0].imag
-        and abs(I[1].real) < tols[1].real
-        and abs(I[1].imag) < tols[1].imag
+        cond0_re < tols[0].real
+        and cond0_im < tols[0].imag
+        and cond1_re < tols[1].real
+        and cond1_im < tols[1].imag
     ):
+        # if (
+        #     abs(I[0].real) < tols[0].real
+        #     and abs(I[0].imag) < tols[0].imag
+        #     and abs(I[1].real) < tols[1].real
+        #     and abs(I[1].imag) < tols[1].imag
+        # ):
         message = "No poles"
         r0 = True
     elif abs((R21 - R10).real / R10.real) < tols[2].real and (
@@ -275,9 +302,9 @@ def min_dist(z0, z1, zp):
     return bk.min(bk.array([xp - x0, yp - y0, x1 - xp, y1 - yp]))
 
 
-def refine_pole_optimize(func, z0, z1, zp, zr, order, options=options):
+def refine_pole_optimize(func, zp, zr, options=options):
     x0 = [zp.real, zp.imag]
-    tolerances = options["tolerances"]
+    tolerances = options["refine"]["tolerances"]
     tol_pol = tolerances["pole"]
     method = options["refine"]["method"].lower()
 
@@ -288,7 +315,7 @@ def refine_pole_optimize(func, z0, z1, zp, zr, order, options=options):
     if method in ("nelder-mead", "powell", "cobyla"):
         jac = None
     else:
-        jac = lambda x: approx_fprime5(x, func_min, 1.5e-8)
+        jac = lambda x: approx_fprime(x, func_min, 1.5e-8)
 
     opt = minimize(
         func_min,
@@ -309,19 +336,22 @@ def refine_pole_optimize(func, z0, z1, zp, zr, order, options=options):
 
 
 def refine_pole_cauchy(func, z0, z1, zp, zr, order, options=options):
-    tolerances = options["tolerances"]
+    tolerances = options["refine"]["tolerances"]
     tol_pol = _tol_real2complex(tolerances["pole"])
     tol_res = _tol_real2complex(tolerances["residue"])
-    par_integ_ = tolerances["integration"]
+    par_integ_ = options["refine"]["integration"]
     par_integ_tol = _tol_real2complex(par_integ_["tol"])
-    par_integ = par_integ_tol.real, par_integ_tol.imag, par_integ_["divmax"]
+    par_integ = (
+        par_integ_tol.real,
+        par_integ_tol.imag,
+        par_integ_["divmax"],
+    )
     nref_max = options["refine"]["nref_max"]
-    ratio_circ = options["ratios"]["circ"]
+    ratio_circ = options["refine"]["circ_ratio"]
     plot_options = options["plot"]
-    colors = plot_options["colors"]
+    color = plot_options["color"]
 
     r = min_dist(z0, z1, zp)
-    logger.info("Refining pole")
     conv_pol_re, conv_pol_im, conv_res_re, conv_res_im = 1, 1, 1, 1
     nref = 0
     nfeval = 0
@@ -332,18 +362,20 @@ def refine_pole_cauchy(func, z0, z1, zp, zr, order, options=options):
         or conv_res_im > tol_res.imag
     ):
         if plot_options["circle"]:
-            circ_b = trace_circ(
-                plt.gca(), zp, r, fill=False, linewidth=0.1, edgecolor=colors[0]
+            circ_b = plot_circle(
+                plt.gca(), zp, r, fill=False, linewidth=0.1, edgecolor=color
             )
-            circ = trace_circ(
+            circ = plot_circle(
                 plt.gca(),
                 zp,
                 r,
                 fill=True,
                 linewidth=0,
-                facecolor=colors[0],
-                alpha=0.2,
+                facecolor=color,
+                alpha=plot_options["alpha"],
             )
+
+        logger.info(f"Refinement iteration {nref}")
         I, neval = compute_integral_circ(func, zp, r, par_integ, order)
         nfeval += neval
         R10 = compute_R10(I, order)
@@ -362,7 +394,7 @@ def refine_pole_cauchy(func, z0, z1, zp, zr, order, options=options):
         r *= ratio_circ
         zp = pole_ref
         zr = residue_ref
-        if plot_options["circle"]:
+        if plot_options["circle"] and plot_options["remove"]:
             circ.remove()
             circ_b.remove()
         nref += 1
@@ -372,7 +404,7 @@ def refine_pole_cauchy(func, z0, z1, zp, zr, order, options=options):
     return pole_ref, residue_ref, nfeval
 
 
-def refine_pole(*args, options=options, **kwargs):
+def refine_pole(func, z0, z1, zp, zr, order, options=options):
     method = options["refine"]["method"].lower()
 
     MINIMIZE_METHODS = [
@@ -398,9 +430,9 @@ def refine_pole(*args, options=options, **kwargs):
         )
     logger.info(f"Refining pole using {method} method")
     if method == "cauchy":
-        return refine_pole_cauchy(*args, options=options, **kwargs)
+        return refine_pole_cauchy(func, z0, z1, zp, zr, order, options=options)
     else:
-        return refine_pole_optimize(*args, options=options, **kwargs)
+        return refine_pole_optimize(func, zp, zr, options=options)
 
 
 def pole_hunt(
@@ -418,18 +450,16 @@ def pole_hunt(
         init.residues = []
         init.ncuts = 0
         init.nfeval = 0
-    poles = init.poles
-    residues = init.residues
-    ncuts = init.ncuts
-    nfeval = init.nfeval
+    res = copy.copy(init)
+    # poles = res.poles
+    # residues = res.residues
+    # nfeval = res.nfeval
     ratios = options["ratios"]
     ratio_re = ratios["real"]
     ratio_im = ratios["imag"]
-    ratio_circ = ratios["circ"]
+    ratio_circ = options["refine"]["circ_ratio"]
     plot_options = options["plot"]
     tolerances = options["tolerances"]
-    tol_pol = _tol_real2complex(tolerances["pole"])
-    tol_res = _tol_real2complex(tolerances["residue"])
     tols_ = tolerances["moments"]
     tols = (
         _tol_real2complex(tols_["0"]),
@@ -444,16 +474,10 @@ def pole_hunt(
     nref_max = options["refine"]["nref_max"]
 
     plot_options = options["plot"]
-    colors = plot_options["colors"]
+    color = plot_options["color"]
 
-    logger.info(f"Number of subdivisions = {ncuts}")
-
-    if ncuts > ncuts_max:
-        poles, residues = bk.array(poles, dtype=bk.complex128), bk.array(
-            residues, dtype=bk.complex128
-        )
-        isort = poles.real.argsort()
-        return poles[isort], residues[isort], ncuts, nfeval
+    if res.ncuts > ncuts_max:
+        return res
     if zeros:
         func1 = lambda z: 1 / func(z)
     else:
@@ -462,34 +486,25 @@ def pole_hunt(
         # if ncuts == 0:
         #     plt.gca().set_xlim(z0.real, z1.real)
         #     plt.gca().set_ylim(z0.imag, z1.imag)
-        patch1 = trace_rect(
+        patch1 = plot_rectangle(
             plt.gca(),
             z0,
             z1,
-            fill=False,
+            fill=True,
             linewidth=1,
-            facecolor=colors[0],
-            alpha=0.2,
+            facecolor=color,
+            alpha=plot_options["alpha"],
         )
-        patch2 = trace_rect(
+        patch2 = plot_rectangle(
             plt.gca(),
             z0,
             z1,
             fill=False,
-            linewidth=2,
-            edgecolor=colors[0],
-            alpha=0.9,
+            linewidth=3,
+            edgecolor=color,
+            alpha=1,
         )
-        patch3 = trace_rect(
-            plt.gca(),
-            z0,
-            z1,
-            fill=False,
-            facecolor="w",
-            linewidth=0.0,
-            edgecolor=colors[1],
-            alpha=0.2,
-        )
+    logger.info(f"Number of subdivisions = {res.ncuts}")
     pole, residue, r0, r1, r2, message, nfeval_ = ispole(
         func1,
         z0,
@@ -498,17 +513,12 @@ def pole_hunt(
         par_integ=par_integ,
         order=order,
     )
-    nfeval += nfeval_
+    res.nfeval += nfeval_
     logger.info(message)
     if r2:
-        ncuts += 1
+        res.ncuts += 1
         Z = cut_in_four(z0, z1, ratio_re=ratio_re, ratio_im=ratio_im)
         for z in Z:
-            res = namedtuple("Result", ["poles", "residues", "ncuts", "nfeval"])
-            res.poles = poles
-            res.residues = residues
-            res.ncuts = ncuts
-            res.nfeval = nfeval
             res = pole_hunt(
                 func1,
                 z[0],
@@ -531,35 +541,23 @@ def pole_hunt(
                     order,
                     options=options,
                 )
-                nfeval += nfeval_ref
-            poles.append(pole)
-            residues.append(residue)
+                res.nfeval += nfeval_ref
+            res.poles.append(pole)
+            res.residues.append(residue)
             if plot_options["poles"]:
                 plt.gca().plot(
                     bk.real(pole),
                     bk.imag(pole),
                     plot_options["marker"]["value"],
                     ms=plot_options["marker"]["size"],
-                    c=colors[0],
+                    c=color,
                     linewidth=1,
                 )
                 _pause()
-    if plot_options["rectangle"]:
+    if plot_options["rectangle"] and plot_options["remove"]:
         patch1.remove()
         patch2.remove()
-        patch3.remove()
 
-    poles, residues = bk.array(poles, dtype=bk.complex128), bk.array(
-        residues, dtype=bk.complex128
-    )
-    isort = poles.real.argsort()
-    poles = poles[isort]
-    residues = residues[isort]
-    res = namedtuple("Result", ["poles", "residues", "ncuts", "nfeval"])
-    res.poles = poles
-    res.residues = residues
-    res.ncuts = ncuts
-    res.nfeval = nfeval
     _pause()
     return res
 
@@ -584,6 +582,12 @@ def get_options():
 def _wrapper(*args, **kwargs):
     res = pole_hunt(*args, **kwargs)
     logger.info(final_message(res.poles, res.residues, res.ncuts, res.nfeval))
+    poles, residues = bk.array(res.poles, dtype=bk.complex128), bk.array(
+        res.residues, dtype=bk.complex128
+    )
+    isort = poles.real.argsort()
+    res.poles = poles[isort]
+    res.residues = residues[isort]
     return res
 
 
